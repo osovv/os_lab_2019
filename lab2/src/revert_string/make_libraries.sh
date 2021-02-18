@@ -1,4 +1,7 @@
 #!/bin/sh
+mkdir -p bin/shared
+mkdir -p bin/static
+
 gcc -c src/main.c -o bin/main.o
 
 gcc -c src/revert_string.c -o bin/static/revert_string.o
