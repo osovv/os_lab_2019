@@ -1,8 +1,8 @@
-#include <CUnit/Basic.h>
+#include <BCUnit/Basic.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "revert_string.h"
+#include "../../revert_string/src/revert_string.h"
 
 void testRevertString(void) {
   char simple_string[] = "Hello";
