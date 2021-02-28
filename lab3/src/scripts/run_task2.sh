@@ -7,3 +7,5 @@ for i in {1..5}; do
     echo "seed = $seed, array_size = $array_size, pnum = $i"
     sh -c "$bin_dir/task2 --seed $seed --array_size $array_size --pnum $pnum"
 done
+echo 'with --by_files'
+sh -c "$bin_dir/task2 --seed $seed --array_size $array_size --pnum $pnum --by_files"
