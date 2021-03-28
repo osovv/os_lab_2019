@@ -1,6 +1,8 @@
 # Ignore all
 *
 
+
+
 # Unignore all with extensions
 !*.*
 
@@ -32,3 +34,6 @@ relative/path/to/dir/filename.extension
 
 # Ignore a file without extension
 relative/path/to/dir/anotherfile
+
+.vscode
+valgrind.*
