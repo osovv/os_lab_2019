@@ -12,28 +12,21 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-struct Server {
+#include "mult.h"
+#define h_addr h_addr_list[0]
+
+struct Server
+{
   char ip[255];
   int port;
 };
 
-uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
-  uint64_t result = 0;
-  a = a % mod;
-  while (b > 0) {
-    if (b % 2 == 1)
-      result = (result + a) % mod;
-    a = (a * 2) % mod;
-    b /= 2;
-  }
-
-  return result % mod;
-}
-
-bool ConvertStringToUI64(const char *str, uint64_t *val) {
+bool ConvertStringToUI64(const char *str, uint64_t *val)
+{
   char *end = NULL;
   unsigned long long i = strtoull(str, &end, 10);
-  if (errno == ERANGE) {
+  if (errno == ERANGE)
+  {
     fprintf(stderr, "Out of uint64_t range: %s\n", str);
     return false;
   }
@@ -45,12 +38,16 @@ bool ConvertStringToUI64(const char *str, uint64_t *val) {
   return true;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   uint64_t k = -1;
   uint64_t mod = -1;
   char servers[255] = {'\0'}; // TODO: explain why 255
+  // Max length of filename is 255 chars (ext4)
+  // Max length of pathname is 4095 chars. (limit of kernel)
 
-  while (true) {
+  while (true)
+  {
     int current_optind = optind ? optind : 1;
 
     static struct option options[] = {{"k", required_argument, 0, 0},
@@ -64,16 +61,27 @@ int main(int argc, char **argv) {
     if (c == -1)
       break;
 
-    switch (c) {
-    case 0: {
-      switch (option_index) {
+    switch (c)
+    {
+    case 0:
+    {
+      switch (option_index)
+      {
       case 0:
         ConvertStringToUI64(optarg, &k);
-        // TODO: your code here
+        if (k < 0)
+        {
+          printf("k should be a non-negative number!\n");
+          return -1;
+        }
         break;
       case 1:
         ConvertStringToUI64(optarg, &mod);
-        // TODO: your code here
+        if (mod < 1)
+        {
+          printf("mod should be a non-negative number!\n");
+          return -1;
+        }
         break;
       case 2:
         // TODO: your code here
@@ -82,7 +90,8 @@ int main(int argc, char **argv) {
       default:
         printf("Index %d is out of options\n", option_index);
       }
-    } break;
+    }
+    break;
 
     case '?':
       printf("Arguments error\n");
@@ -92,23 +101,52 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (k == -1 || mod == -1 || !strlen(servers)) {
+  if (k == -1 || mod == -1 || !strlen(servers))
+  {
     fprintf(stderr, "Using: %s --k 1000 --mod 5 --servers /path/to/file\n",
             argv[0]);
     return 1;
   }
 
-  // TODO: for one server here, rewrite with servers from file
-  unsigned int servers_num = 1;
-  struct Server *to = malloc(sizeof(struct Server) * servers_num);
-  // TODO: delete this and parallel work between servers
-  to[0].port = 20001;
-  memcpy(to[0].ip, "127.0.0.1", sizeof("127.0.0.1"));
+  FILE *fp = fopen(servers, "r");
+  if (fp == NULL)
+  {
+    printf("Could not open file %s\n", servers);
+    return 0;
+  }
+  unsigned int servers_num = 0;
+  char c;
+  for (c = getc(fp); c != EOF; c = getc(fp))
+    if (c == '\n')
+      servers_num = servers_num + 1;
+  fclose(fp);
 
-  // TODO: work continiously, rewrite to make parallel
-  for (int i = 0; i < servers_num; i++) {
+  struct Server *to = malloc(sizeof(struct Server) * servers_num);
+
+  int i = 0;
+  char buffer[256];
+
+  fp = fopen(servers, "r");
+
+  while (fgets(buffer, sizeof(buffer), fp))
+  {
+
+    strcpy(to[i].ip, strtok(buffer, ":"));
+    to[i].port = atoi(strtok(NULL, ":"));
+    printf("Client #%d %s:%d\n", i + 1, to[i].ip, to[i].port);
+    i++;
+  }
+  fclose(fp);
+  int i;
+
+  uint64_t step = k / servers_num;
+
+  uint64_t result = 1;
+  for (int i = 0; i < servers_num; i++)
+  {
     struct hostent *hostname = gethostbyname(to[i].ip);
-    if (hostname == NULL) {
+    if (hostname == NULL)
+    {
       fprintf(stderr, "gethostbyname failed with %s\n", to[i].ip);
       exit(1);
     }
@@ -119,33 +157,39 @@ int main(int argc, char **argv) {
     server.sin_addr.s_addr = *((unsigned long *)hostname->h_addr);
 
     int sck = socket(AF_INET, SOCK_STREAM, 0);
-    if (sck < 0) {
+    if (sck < 0)
+    {
       fprintf(stderr, "Socket creation failed!\n");
       exit(1);
     }
 
-    if (connect(sck, (struct sockaddr *)&server, sizeof(server)) < 0) {
+    if (connect(sck, (struct sockaddr *)&server, sizeof(server)) < 0)
+    {
       fprintf(stderr, "Connection failed\n");
       exit(1);
     }
 
     // TODO: for one server
     // parallel between servers
-    uint64_t begin = 1;
-    uint64_t end = k;
+    uint64_t begin = (uint64_t)i * step;
+    uint64_t end = (uint64_t)(i + 1) * step;
+    if (i == servers_num - 1 && k % servers_num != 0)
+      end = k;
 
     char task[sizeof(uint64_t) * 3];
     memcpy(task, &begin, sizeof(uint64_t));
     memcpy(task + sizeof(uint64_t), &end, sizeof(uint64_t));
     memcpy(task + 2 * sizeof(uint64_t), &mod, sizeof(uint64_t));
 
-    if (send(sck, task, sizeof(task), 0) < 0) {
+    if (send(sck, task, sizeof(task), 0) < 0)
+    {
       fprintf(stderr, "Send failed\n");
       exit(1);
     }
 
     char response[sizeof(uint64_t)];
-    if (recv(sck, response, sizeof(response), 0) < 0) {
+    if (recv(sck, response, sizeof(response), 0) < 0)
+    {
       fprintf(stderr, "Recieve failed\n");
       exit(1);
     }
@@ -156,8 +200,13 @@ int main(int argc, char **argv) {
     memcpy(&answer, response, sizeof(uint64_t));
     printf("answer: %llu\n", answer);
 
+    result = result * answer;
+    result = result % mod;
+
     close(sck);
   }
+  pritnf("Result: %llu", result);
+
   free(to);
 
   return 0;
