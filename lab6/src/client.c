@@ -137,9 +137,8 @@ int main(int argc, char **argv)
     i++;
   }
   fclose(fp);
-  int i;
-
   uint64_t step = k / servers_num;
+  printf("Servers num: %d\n", servers_num);
 
   uint64_t result = 1;
   for (int i = 0; i < servers_num; i++)
@@ -171,7 +170,7 @@ int main(int argc, char **argv)
 
     // TODO: for one server
     // parallel between servers
-    uint64_t begin = (uint64_t)i * step;
+    uint64_t begin = (uint64_t)i * step + 1;
     uint64_t end = (uint64_t)(i + 1) * step;
     if (i == servers_num - 1 && k % servers_num != 0)
       end = k;
@@ -198,14 +197,13 @@ int main(int argc, char **argv)
     // unite results
     uint64_t answer = 0;
     memcpy(&answer, response, sizeof(uint64_t));
-    printf("answer: %llu\n", answer);
+    printf("Answer from %s:%d: %llu\n", to[i].ip, to[i].port, answer);
 
-    result = result * answer;
-    result = result % mod;
+    result = ((result % mod) * (answer % mod)) % mod;
 
     close(sck);
   }
-  pritnf("Result: %llu", result);
+  printf("Result: %llu", result);
 
   free(to);
 

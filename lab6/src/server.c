@@ -22,10 +22,11 @@ struct FactorialArgs
 
 uint64_t Factorial(const struct FactorialArgs *args)
 {
+  printf("Begin %d, end %d\n", args->begin, args->end);
   uint64_t ans = 1;
   uint64_t i;
   uint64_t mod = args->mod;
-  for (i = args->begin; i < args->end; i++)
+  for (i = args->begin; i <= args->end; i++)
   {
     ans = MultModulo(ans, i, mod);
   }
@@ -172,14 +173,27 @@ int main(int argc, char **argv)
 
       fprintf(stdout, "Receive: %llu %llu %llu\n", begin, end, mod);
 
+      /*
+      struct FactorialArgs a;
+      a.begin = 1;
+      a.end = 10;
+      a.mod = 3628807;
+      */
+
       struct FactorialArgs args[tnum];
       uint64_t n = end - begin + 1;
       uint64_t partSize = (uint64_t)n / tnum;
+      if (partSize == 0)
+      {
+        partSize == n;
+      }
+      printf("Part Size: %d\n", partSize);
       bool isDivisible = n % partSize == 0 ? true : false;
+
       for (uint32_t i = 0; i < tnum; i++)
       {
-        args[i].begin = (uint64_t)i * partSize + 1;
-        args[i].end = (uint64_t)((i + 1) * partSize + 1);
+        args[i].begin = (uint64_t)i * partSize + begin;
+        args[i].end = (uint64_t)(i + 1) * partSize + begin - 1;
         args[i].mod = mod;
         if (i == tnum - 1 && isDivisible == false)
         {
@@ -200,6 +214,7 @@ int main(int argc, char **argv)
       {
         uint64_t result = 0;
         pthread_join(threads[i], (void **)&result);
+        printf("Total %d, Result %d\n", total, result);
         total = MultModulo(total, result, mod);
       }
 
