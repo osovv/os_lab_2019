@@ -22,7 +22,6 @@ struct FactorialArgs
 
 uint64_t Factorial(const struct FactorialArgs *args)
 {
-  printf("Begin %d, end %d\n", args->begin, args->end);
   uint64_t ans = 1;
   uint64_t i;
   uint64_t mod = args->mod;
@@ -189,7 +188,6 @@ int main(int argc, char **argv)
         m++;
         partSize = (uint64_t)n / (tnum - m);
       }
-      printf("Part Size: %d\n", partSize);
       bool isDivisible = n % partSize == 0 ? true : false;
 
       for (uint32_t i = 0; i < tnum - m; i++)
@@ -216,7 +214,6 @@ int main(int argc, char **argv)
       {
         uint64_t result = 0;
         pthread_join(threads[i], (void **)&result);
-        printf("Total %d, Result %d\n", total, result);
         total = MultModulo(total, result, mod);
       }
 

@@ -138,7 +138,6 @@ int main(int argc, char **argv)
   }
   fclose(fp);
   uint64_t step = k / servers_num;
-  printf("Servers num: %d\n", servers_num);
 
   uint64_t result = 1;
   for (int i = 0; i < servers_num; i++)
