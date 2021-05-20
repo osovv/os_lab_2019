@@ -183,14 +183,16 @@ int main(int argc, char **argv)
       struct FactorialArgs args[tnum];
       uint64_t n = end - begin + 1;
       uint64_t partSize = (uint64_t)n / tnum;
-      if (partSize == 0)
+      int m = 0;
+      while (partSize == 0)
       {
-        partSize == n;
+        m++;
+        partSize = (uint64_t)n / (tnum - m);
       }
       printf("Part Size: %d\n", partSize);
       bool isDivisible = n % partSize == 0 ? true : false;
 
-      for (uint32_t i = 0; i < tnum; i++)
+      for (uint32_t i = 0; i < tnum - m; i++)
       {
         args[i].begin = (uint64_t)i * partSize + begin;
         args[i].end = (uint64_t)(i + 1) * partSize + begin - 1;
@@ -200,7 +202,7 @@ int main(int argc, char **argv)
           args[i].end = (uint64_t)end;
         }
       }
-      for (uint32_t i = 0; i < tnum; i++)
+      for (uint32_t i = 0; i < tnum - m; i++)
       {
         if (pthread_create(&threads[i], NULL, ThreadFactorial,
                            (void *)&args[i]))
@@ -210,7 +212,7 @@ int main(int argc, char **argv)
         }
       }
       uint64_t total = 1;
-      for (uint32_t i = 0; i < tnum; i++)
+      for (uint32_t i = 0; i < tnum - m; i++)
       {
         uint64_t result = 0;
         pthread_join(threads[i], (void **)&result);
