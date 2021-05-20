@@ -1,6 +1,6 @@
 CC=gcc
 
-all: bin/shared/libmult.so bin/mult.o bin/server
+all: bin/shared/libmult.so bin/mult.o bin/server bin/client
 
 bin/shared/libmult.so: bin/mult.o
 	$(CC) -o bin/shared/libmult.so -shared bin/mult.o
@@ -15,4 +15,4 @@ bin/client: client.c
 	$(CC) -o bin/client client.c -lpthread -lmult -Lbin/shared
 
 clean:
-	rm bin/shared/libmult.so bin/mult.o bin/server
+	rm bin/shared/libmult.so bin/mult.o bin/server bin/client
